@@ -9,14 +9,14 @@ function App() {
   const [attendeeResponse, setAttendeeResponse] = useState()
   const [callCreated, setCallCreated] = useState(false)
   const videoElement = useRef()
-  const callVideo = async () => { 
+  const startCall = async () => { 
     const response = await axios.get('http://localhost:5000/meeting')
     setMeetingResponse(response.data.meetingResponse)
     setAttendeeResponse(response.data.attendee)
     setCallCreated(true)
   }
 
-  const video = async () => { 
+  const joinVideoCall = async () => { 
     const logger = new Chime.ConsoleLogger('ChimeMeetingLogs', Chime.LogLevel.INFO);
     const deviceController = new Chime.DefaultDeviceController(logger);
     const configuration = new Chime.MeetingSessionConfiguration(meetingResponse, attendeeResponse);
@@ -41,8 +41,8 @@ function App() {
     <div className="App">
       <header className="App-header">
         <video ref={videoElement}></video>
-        <button disabled={!callCreated} onClick={video}> join call</button>
-        <button onClick={callVideo}>start call</button>
+        <button disabled={!callCreated} onClick={joinVideoCall}> join call</button>
+        <button onClick={startCall}>start call</button>
       </header>
     </div>
   );
