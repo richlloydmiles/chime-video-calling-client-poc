@@ -1,23 +1,48 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useRef, useState } from 'react';
 import './App.css';
+import axios from 'axios'
+
+import * as Chime from 'amazon-chime-sdk-js';
 
 function App() {
+  const [meetingResponse, setMeetingResponse] = useState()
+  const [attendeeResponse, setAttendeeResponse] = useState()
+  const [callCreated, setCallCreated] = useState(false)
+  const videoElement = useRef()
+  const callVideo = async () => { 
+    const response = await axios.get('http://localhost:5000/meeting')
+    setMeetingResponse(response.data.meetingResponse)
+    setAttendeeResponse(response.data.attendee)
+    setCallCreated(true)
+  }
+
+  const video = async () => { 
+    const logger = new Chime.ConsoleLogger('ChimeMeetingLogs', Chime.LogLevel.INFO);
+    const deviceController = new Chime.DefaultDeviceController(logger);
+    const configuration = new Chime.MeetingSessionConfiguration(meetingResponse, attendeeResponse);
+    const meetingSession = new Chime.DefaultMeetingSession(configuration, logger, deviceController);
+
+    const observer = {
+      audioVideoDidStart: () => {
+        meetingSession.audioVideo.startLocalVideoTile();
+      },
+      videoTileDidUpdate: tileState => {
+        meetingSession.audioVideo.bindVideoElement(tileState.tileId, videoElement.current);
+      }
+    }
+
+    meetingSession.audioVideo.addObserver(observer);
+    const firstVideoDeviceId = (await meetingSession.audioVideo.listVideoInputDevices())[0].deviceId;
+    await meetingSession.audioVideo.chooseVideoInputDevice(firstVideoDeviceId);
+    meetingSession.audioVideo.start();
+  }
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <video ref={videoElement}></video>
+        <button disabled={!callCreated} onClick={video}> join call</button>
+        <button onClick={callVideo}>start call</button>
       </header>
     </div>
   );
