@@ -1,1 +1,1 @@
-A react app poc
+A React app AWS Chime video calling poc
